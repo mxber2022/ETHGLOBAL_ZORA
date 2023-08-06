@@ -10,8 +10,8 @@ const app = express();
 const port = "8080";
 app.use(bodyParser.json());
 
-const ethereumNodeUrl = "https://base-mainnet.public.blastapi.io"; 
-const web3 = new Web3(ethereumNodeUrl);
+const rpc_url = "https://testnet.rpc.zora.co"; 
+const web3 = new Web3(rpc_url);
 
 const botToken = process.env.BotToken;
 const bot = new TelegramBot(botToken, { polling: true });
