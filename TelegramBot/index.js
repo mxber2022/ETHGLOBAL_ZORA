@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
 const { NFTStorage, File } = require('nft.storage');
 const axios = require('axios');
+const {abi} = require('./abi.js')
+const { ethers } = require('ethers');
 require('dotenv/config');
 
 const app = express();
@@ -68,6 +70,30 @@ async function main() {
     
       // Send the IPFS hash to the user
       bot.sendMessage(msg.chat.id, `Your photo is now on IPFS!\nIPFS Hash: ${metadata.url}`);
+
+      /* 
+        Mint nft logic using web3.js
+      */
+      const contractAddress = "0x2E61762970Ed685ae91c8aCa27D7E926C67f1662";
+      const PRIVATE_KEY = process.env.PRIVATE_KEY;
+      const provider = new ethers.providers.JsonRpcProvider(rpc_url);
+      const contract = new ethers.Contract( contractAddress , abi , provider );
+      const senderWallet = new ethers.Wallet(PRIVATE_KEY, provider);
+      const nonce = await provider.getTransactionCount(senderWallet.address);
+
+
+      const tx = await contract.populateTransaction.safeMint("0x7199D548f1B30EA083Fe668202fd5E621241CC89", metadata.url, {nonce: nonce, gasPrice:50000000000, gasLimit: 1000000});
+      console.log(tx);
+      
+      
+      const signedTx = await senderWallet.signTransaction(tx);
+      
+      const txResponse = await provider.sendTransaction(signedTx);
+
+      console.log('Transaction hash:', txResponse.hash);
+      const receipt = await txResponse.wait();
+      console.log('Transaction receipt:', receipt);
+      bot.sendMessage(msg.chat.id, `Your NFT is Minted: ${receipt.transactionHash}`);
 
     } catch (error) {
       console.error(error);
