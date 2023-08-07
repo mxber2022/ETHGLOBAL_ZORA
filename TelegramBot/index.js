@@ -13,6 +13,8 @@ const port = "8080";
 app.use(bodyParser.json());
 
 const rpc_url = "https://testnet.rpc.zora.co"; 
+//const rpc_url_optimism = "https://goerli.optimism.io/"; 
+//const rpc_url_base = "https://base-goerli.public.blastapi.io/"; 
 const web3 = new Web3(rpc_url);
 
 const botToken = process.env.BotToken;
@@ -65,25 +67,62 @@ async function main() {
         description: "Description of the image",
         image: file,
       });
-
-      console.log("metadata: ", metadata);
-    
-      // Send the IPFS hash to the user
-      bot.sendMessage(msg.chat.id, `Your photo is now on IPFS!\nIPFS Hash: ${metadata.url}`);
+      bot.sendMessage(msg.chat.id, `IPFS Hash: ${metadata.url}`);
 
       /* 
         Mint nft logic using web3.js
       */
-      const contractAddress = "0x2E61762970Ed685ae91c8aCa27D7E926C67f1662";
+
+      const words = msg.caption.split(' ');
+      let temp = words.filter(word => word.trim() !== '');
+
+
+
+      let rpc_url_z;
+      let contractAddress;
+      let CHIN_ID;
+      const MINT_TO = temp.at(0);
+      const CHAIN = temp.at(1);
+      const ZORA_CONTRACT = "0x2E61762970Ed685ae91c8aCa27D7E926C67f1662";
+      const OPTIMISM_CONTRACT = "0xb5dD8f6770593bC05Dc5B336F809695Ee481c991";
+      const BASE_CONTRACT = "0xb5dD8f6770593bC05Dc5B336F809695Ee481c991";
+      const rpc_url_zora = "https://testnet.rpc.zora.co"; 
+      const rpc_url_optimism = "https://goerli.optimism.io"; 
+      const rpc_url_base = "https://base-goerli.public.blastapi.io/"; 
+
+      if(CHAIN == "zora"){
+        rpc_url_z = rpc_url_zora;
+        contractAddress = ZORA_CONTRACT;
+        CHIN_ID = 999;
+      }
+
+      if(CHAIN == "optimism"){
+        rpc_url_z = rpc_url_optimism;
+        contractAddress = OPTIMISM_CONTRACT;
+        CHIN_ID = 420;
+      }
+
+      if(CHAIN == "base"){
+        rpc_url_z = rpc_url_base;
+        contractAddress = BASE_CONTRACT;
+        CHIN_ID = 84531;
+      }
+
+
+    
       const PRIVATE_KEY = process.env.PRIVATE_KEY;
-      const provider = new ethers.providers.JsonRpcProvider(rpc_url);
+      const provider = new ethers.providers.JsonRpcProvider(rpc_url_z);
       const contract = new ethers.Contract( contractAddress , abi , provider );
       const senderWallet = new ethers.Wallet(PRIVATE_KEY, provider);
       const nonce = await provider.getTransactionCount(senderWallet.address);
 
-
-      const tx = await contract.populateTransaction.safeMint("0x7199D548f1B30EA083Fe668202fd5E621241CC89", metadata.url, {nonce: nonce, gasPrice:50000000000, gasLimit: 1000000});
+      const tx = await contract.populateTransaction.safeMint(MINT_TO, metadata.url, {
+          nonce: nonce, 
+          gasPrice:50000000000, 
+          gasLimit: 1000000
+        }); 
       console.log(tx);
+      tx.chainId = CHIN_ID;
       
       
       const signedTx = await senderWallet.signTransaction(tx);
@@ -94,6 +133,8 @@ async function main() {
       const receipt = await txResponse.wait();
       console.log('Transaction receipt:', receipt);
       bot.sendMessage(msg.chat.id, `Your NFT is Minted: ${receipt.transactionHash}`);
+
+
 
     } catch (error) {
       console.error(error);
