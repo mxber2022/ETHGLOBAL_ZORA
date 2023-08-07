@@ -21,6 +21,67 @@ const botToken = process.env.BotToken;
 const bot = new TelegramBot(botToken, { polling: true });
 let chatId;
 
+
+
+
+
+
+
+
+
+const userState = {};
+let CHAIN;
+
+bot.onText(/\/mint/, (msg) => {
+  const chatId = msg.chat.id;
+
+  // Define the inline keyboard buttons
+  const keyboard = [
+    [{ text: 'MINT ON ZORA', callback_data: 'zora' }],
+    [{ text: 'MINT ON BASE 🛡️', callback_data: 'base' }],
+    [{ text: 'MINT ON OPTIMISM ✨🔴_🔴✨', callback_data: 'optimism' }]
+  ];
+
+  const replyMarkup = {
+    reply_markup: {
+      inline_keyboard: keyboard,
+    },
+  };
+
+  bot.sendMessage(chatId, 'Please choose an option:', replyMarkup);
+});
+
+bot.on('callback_query', async (query) => {
+  const chatId = query.message.chat.id;
+  const selectedNetwork = query.data;
+
+  if (selectedNetwork === 'optimism') {
+    CHAIN = "optimism";
+    bot.sendMessage(chatId, 'Send NFT and address to mint on optimism');
+  }
+  if (selectedNetwork === 'base') {
+    CHAIN = "base";
+    bot.sendMessage(chatId, 'Send NFT and address to mint on base');
+  }
+  if (selectedNetwork === 'zora'){
+    CHAIN = "zora";
+    bot.sendMessage(chatId, 'Send NFT and address to mint on zora');
+  }
+  
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function main() {
   
   bot.onText(/\/start/, (msg) => {
@@ -82,7 +143,7 @@ async function main() {
       let contractAddress;
       let CHIN_ID;
       const MINT_TO = temp.at(0);
-      const CHAIN = temp.at(1);
+      //const CHAIN = temp.at(1);
       const ZORA_CONTRACT = "0x2E61762970Ed685ae91c8aCa27D7E926C67f1662";
       const OPTIMISM_CONTRACT = "0xb5dD8f6770593bC05Dc5B336F809695Ee481c991";
       const BASE_CONTRACT = "0xb5dD8f6770593bC05Dc5B336F809695Ee481c991";
