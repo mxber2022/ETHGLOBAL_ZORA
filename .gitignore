@@ -2,3 +2,4 @@
 /SmartContract/node_modules
 /TelegramBot/node_modules
 /TelegramBot/.env
+.env
